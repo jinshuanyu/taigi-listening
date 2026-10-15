@@ -46,6 +46,7 @@ button:focus-visible,input:focus-visible,label:focus-within{outline:3px solid va
 .card>.hint:first-child{align-self:end}
 .card>.hint:last-child{align-self:start}
 .card>.zh{grid-row:1/span 2}
+.card>.hint.ask{grid-row:1/span 2;align-self:center;font-size:1.2rem;font-weight:500;color:var(--ink)}
 .hint{font-size:.9rem;color:var(--muted);margin:0}
 .zh{font-size:1.25rem;font-weight:500;margin:0;text-wrap:balance}
 .zh small{display:block;font-size:.78rem;color:var(--muted);font-weight:400;letter-spacing:.08em}
@@ -212,7 +213,7 @@ function grid(){
 function newQ(autoplay){
   done=false;$('feedback').innerHTML='';q=pick();
   if(mode==='tone'){
-    $('card').innerHTML=`<p class="hint">聽這個字，是第幾聲？</p><button class="play" id="play" aria-label="播放">${playIcon}</button><p class="hint">可以一直重聽</p>`;
+    $('card').innerHTML=`<p class="hint ask">聽這個字，是第幾聲？</p><button class="play" id="play" aria-label="播放">${playIcon}</button>`;
     $('answers').innerHTML=grid();
     $('answers').querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>answerTone(+b.dataset.t,b));
   }else{
@@ -235,9 +236,9 @@ function record(ok){
   store.set('ty-wrong',wrong);updMeta();
 }
 function footer(ok){
-  return `<div class="row2" style="margin-top:8px"><button class="btn ghost" id="again">再聽一次</button><button class="btn" id="next">下一題</button></div>`;
+  return `<div class="row2" style="margin-top:8px"><button class="btn" id="next">下一題</button></div>`;
 }
-function wire(){ $('again').onclick=()=>play(q); $('next').onclick=()=>newQ(true); $('next').focus({preventScroll:true}); }
+function wire(){ $('next').onclick=()=>newQ(true); $('next').focus({preventScroll:true}); }
 
 function answerTone(t,b){
   if(done) return; done=true;
