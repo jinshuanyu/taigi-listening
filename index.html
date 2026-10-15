@@ -74,6 +74,7 @@ button:focus-visible,input:focus-visible,label:focus-within{outline:3px solid va
 .row2{display:flex;gap:8px}.row2 .btn{flex:1}
 .fb{border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:4px;font-size:.95rem}
 .fb.good{background:var(--good-soft)}.fb.bad{background:var(--bad-soft)}
+.fb.info{background:var(--surface);border:1px solid var(--line);margin-bottom:10px}
 .fb strong{font-size:1.05rem}
 .ans{font-family:var(--f-han);font-size:2rem;line-height:1.2}
 .ans .ok{color:var(--good)}.ans .no{color:var(--bad);text-decoration:underline}
@@ -279,11 +280,14 @@ const DEMO_MP3={1:'9/9721',2:'4/4482',3:'6/6669',4:'13/13254',5:'8/8571',7:'9/90
 const DEMO_SRC=t=>'https://sutian.moe.edu.tw/media/senn/mp3/imtong/subak/'+DEMO_MP3[t]+'.mp3';
 let seqTimer=null;
 function stopSeq(){if(seqTimer){clearTimeout(seqTimer);seqTimer=null}au.onended=null;au.playbackRate=1;document.querySelectorAll('.tone.on').forEach(b=>b.classList.remove('on'))}
-function playDemo(tn,rate){document.querySelectorAll('.tone.on').forEach(x=>x.classList.remove('on'));const b=$('t'+tn);if(b)b.classList.add('on');au.src=DEMO_SRC(tn);au.playbackRate=rate||1;const p=au.play();if(p)p.catch(()=>{});}
+// 八聲示範：播到哪個字，下方就顯示那個字的漢字、台羅和聲調說明
+function showDemo(tn){const d=$('demoInfo');if(!d)return;const T=TONES[tn];d.hidden=false;
+  d.innerHTML=`<strong>第 ${tn} 聲・${T.name}（${T.shape}）</strong><div><span class="ans">${T.key}</span>　<span class="lo">${TLO[tn]}</span></div>`;}
+function playDemo(tn,rate){document.querySelectorAll('.tone.on').forEach(x=>x.classList.remove('on'));const b=$('t'+tn);if(b)b.classList.add('on');showDemo(tn);au.src=DEMO_SRC(tn);au.playbackRate=rate||1;const p=au.play();if(p)p.catch(()=>{});}
 function renderDemo(){
   $('card').innerHTML=`<p class="hint ask">八聲口訣</p><button class="play teal" id="seq" aria-label="從第 1 聲依序播放">${playIcon}</button>`;
   $('answers').innerHTML=grid();
-  $('feedback').innerHTML=`<p class="dtip">按播放鍵從第 1 聲連續唸；點上面的字聽單一聲調。<br>有 -p / -t / -k / -h 結尾的字只會是第 4 或第 8 聲：4 聲不標符號、8 聲標一豎。第 6 聲已併入第 7 聲。</p>`;
+  $('feedback').innerHTML=`<div class="fb info" id="demoInfo" role="status" hidden></div><p class="dtip">按播放鍵從第 1 聲連續唸；點上面的字聽單一聲調。<br>有 -p / -t / -k / -h 結尾的字只會是第 4 或第 8 聲：4 聲不標符號、8 聲標一豎。第 6 聲已併入第 7 聲。</p>`;
   $('answers').querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>{stopSeq();playDemo(+b.dataset.t,1)});
   $('seq').onclick=()=>{stopSeq();const list=[1,2,3,4,5,7,8];let i=0;
     const step=()=>{if(i>=list.length){stopSeq();return}playDemo(list[i++],1.35);au.onended=()=>{seqTimer=setTimeout(step,120)}};step();};
