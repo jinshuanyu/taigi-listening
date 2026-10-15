@@ -66,6 +66,7 @@ button:focus-visible,input:focus-visible,label:focus-within{outline:3px solid va
 .tone.good{background:var(--good-soft);border-color:var(--good)}
 .tone.bad{background:var(--bad-soft);border-color:var(--bad)}
 .tone[disabled]:not(.off){cursor:default}
+.grid.locked .tone:not(.off){opacity:.45}
 .inrow{display:flex;gap:8px}
 .inrow input{flex:1;min-width:0;font:400 1.6rem var(--f-han);padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--surface);color:var(--ink);text-align:center}
 .inrow input::placeholder{font:400 .95rem var(--f-body);color:var(--muted)}
@@ -217,6 +218,7 @@ function newQ(autoplay){
     $('card').innerHTML=`<p class="hint ask">聽這個字，選出聲調</p><button class="play" id="play" aria-label="播放">${playIcon}</button>`;
     $('answers').innerHTML=grid();
     $('answers').querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>answerTone(+b.dataset.t,b));
+    lockTones(true); // 還沒按播放前鎖住聲調按鈕
   }else{
     $('card').innerHTML=`<p class="zh"><small>華語意思</small>${q.zh}</p><button class="play" id="play" aria-label="播放">${playIcon}</button>`;
     $('answers').innerHTML=`<div class="inrow"><input id="inp" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="用台語輸入法打漢字" aria-label="輸入漢字"><button class="btn" id="chk">對答案</button></div>`;
@@ -224,9 +226,13 @@ function newQ(autoplay){
     inp.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.isComposing&&e.keyCode!==229){e.preventDefault();checkDict()}});
     $('chk').onclick=checkDict;
   }
-  $('play').onclick=()=>play(q);
+  $('play').onclick=()=>{play(q);lockTones(false)};
   updMeta();
-  if(autoplay) play(q);
+  if(autoplay){play(q);lockTones(false)}
+}
+function lockTones(on){
+  const g=$('answers').querySelector('.grid'); if(!g||mode!=='tone'||done) return;
+  g.classList.toggle('locked',on); g.querySelectorAll('[data-t]').forEach(x=>x.disabled=on);
 }
 
 function record(ok){
