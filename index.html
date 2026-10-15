@@ -233,10 +233,14 @@ function record(ok){
   const L=wrong[mode], i=L.indexOf(q.n);
   if(!ok&&i<0) L.push(q.n);
   if(ok&&i>=0&&$('onlyWrong').checked) L.splice(i,1);
+  // 錯題全部練完：取消勾選，回到全部題目，並在答案下方提示（避免默默換成題庫新題）
+  cleared=ok&&i>=0&&$('onlyWrong').checked&&!L.length;
+  if(cleared) $('onlyWrong').checked=false;
   store.set('ty-wrong',wrong);updMeta();
 }
+let cleared=false;
 function footer(ok){
-  return `<div class="row2" style="margin-top:8px"><button class="btn" id="next">下一題</button></div>`;
+  return `<div class="row2" style="margin-top:8px"><button class="btn" id="next">${cleared?'🎉 錯題練完了！回到全部題目':'下一題'}</button></div>`;
 }
 function wire(){ $('next').onclick=()=>newQ(true); $('next').focus({preventScroll:true}); }
 
