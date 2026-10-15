@@ -180,11 +180,16 @@ function contour(t,w=44,h=20){const c=TONES[t].c,x2=TONES[t].short?w*.45:w-3,y=v
 
 let mode='demo'; // 打開網頁一律先顯示八聲示範（ℹ️ 分頁）
 let wrong=store.get('ty-wrong',{tone:[],dict:[]}); if(!wrong.tone) wrong={tone:[],dict:[]};
+// 選調題：漢字＋台羅完全相同的字（外 guā、空 khang 各有兩個意思）聲音一樣，只出一次
+const TONE_W=W.filter(w=>w.t).filter((w,i,a)=>a.findIndex(x=>x.h===w.h&&x.lo===w.lo)===i);
+// 以前存下的選調錯題若是被併掉的那一筆，改記成保留的那一筆
+{const keep=n=>{const w=W.find(x=>x.n===n);const k=w&&TONE_W.find(x=>x.h===w.h&&x.lo===w.lo);return k?k.n:n};
+ wrong.tone=[...new Set(wrong.tone.map(keep))];}
 const stats={tone:{r:0,t:0,s:0},dict:{r:0,t:0,s:0}};
 let q=null, done=false, last=null;
 
 function pool(){
-  const base=mode==='tone'?W.filter(w=>w.t):W;
+  const base=mode==='tone'?TONE_W:W;
   if($('onlyWrong').checked){const set=new Set(wrong[mode]);const p=base.filter(w=>set.has(w.n));if(p.length) return p;}
   return base;
 }
