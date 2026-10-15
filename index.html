@@ -213,7 +213,7 @@ function grid(){
 function newQ(autoplay){
   done=false;$('feedback').innerHTML='';q=pick();
   if(mode==='tone'){
-    $('card').innerHTML=`<p class="hint ask">聽這個字，是第幾聲？</p><button class="play" id="play" aria-label="播放">${playIcon}</button>`;
+    $('card').innerHTML=`<p class="hint ask">聽這個字，選出聲調</p><button class="play" id="play" aria-label="播放">${playIcon}</button>`;
     $('answers').innerHTML=grid();
     $('answers').querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>answerTone(+b.dataset.t,b));
   }else{
