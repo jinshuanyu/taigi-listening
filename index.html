@@ -31,10 +31,10 @@ header{display:flex;justify-content:space-between;align-items:baseline;gap:12px;
 h1{font-family:var(--f-han);font-size:1.6rem;margin:0;font-weight:700;letter-spacing:.03em;text-wrap:balance}
 .score{font-size:.85rem;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
 .score b{color:var(--ink)}
-.tabs{display:grid;grid-template-columns:repeat(3,1fr);background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:4px;gap:4px}
+.tabs{display:grid;grid-template-columns:auto 1fr 1fr;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:4px;gap:4px}
 .tabs button{font:500 1rem var(--f-body);border:0;background:transparent;color:var(--muted);padding:11px 4px;border-radius:9px;cursor:pointer}
 .tabs button[aria-selected="true"]{background:var(--indigo);color:var(--surface)}
-.tabs button[data-mode="demo"]{color:var(--teal)}
+.tabs button[data-mode="demo"]{color:var(--teal);padding-inline:14px}
 .tabs button[data-mode="demo"][aria-selected="true"]{background:var(--teal);color:var(--surface)}
 .tone.on{border-color:var(--teal);border-width:2px;background:var(--bg)}
 .play.teal{background:var(--teal)}
@@ -126,9 +126,9 @@ button:focus-visible,input:focus-visible,label:focus-within{outline:3px solid va
     <div class="score" id="score"></div>
   </header>
   <div class="tabs" role="tablist">
-    <button role="tab" id="tab-tone" data-mode="tone" aria-selected="true">聽音選調</button>
+    <button role="tab" id="tab-demo" data-mode="demo" aria-selected="true" aria-label="八聲示範" title="八聲示範">ℹ️</button>
+    <button role="tab" id="tab-tone" data-mode="tone" aria-selected="false">聽音選調</button>
     <button role="tab" id="tab-dict" data-mode="dict" aria-selected="false">聽寫漢字</button>
-    <button role="tab" id="tab-demo" data-mode="demo" aria-selected="false">八聲示範</button>
   </div>
   <div class="card" id="card"></div>
   <div id="answers"></div>
@@ -176,7 +176,7 @@ const playIcon='<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11
 function contour(t,w=44,h=20){const c=TONES[t].c,x2=TONES[t].short?w*.45:w-3,y=v=>h-2-(v-1)/4*(h-4);
   return `<svg viewBox="0 0 ${w} ${h}" aria-hidden="true"><line x1="0" y1="${h-1}" x2="${w}" y2="${h-1}" stroke="var(--line)"/><polyline points="3,${y(c[0]).toFixed(1)} ${x2.toFixed(1)},${y(c[1]).toFixed(1)}" fill="none" stroke="var(--indigo)" stroke-width="3" stroke-linecap="round"/></svg>`}
 
-let mode=store.get('ty-mode','tone'); if(!['tone','dict','demo'].includes(mode)) mode='tone';
+let mode='demo'; // 打開網頁一律先顯示八聲示範（ℹ️ 分頁）
 let wrong=store.get('ty-wrong',{tone:[],dict:[]}); if(!wrong.tone) wrong={tone:[],dict:[]};
 const stats={tone:{r:0,t:0,s:0},dict:{r:0,t:0,s:0}};
 let q=null, done=false, last=null;
