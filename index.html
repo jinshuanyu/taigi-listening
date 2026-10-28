@@ -31,7 +31,7 @@ header{display:flex;justify-content:space-between;align-items:baseline;gap:12px;
 h1{font-family:var(--f-han);font-size:1.6rem;margin:0;font-weight:700;letter-spacing:.03em;text-wrap:balance}
 .score{font-size:.85rem;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
 .score b{color:var(--ink)}
-.tabs{display:grid;grid-template-columns:auto 1fr 1fr;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:4px;gap:4px}
+.tabs{display:grid;grid-template-columns:auto 1fr 1fr 1fr;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:4px;gap:4px}
 .tabs button{font:500 1rem var(--f-body);border:0;background:transparent;color:var(--muted);padding:11px 4px;border-radius:9px;cursor:pointer}
 .tabs button[aria-selected="true"]{background:var(--indigo);color:var(--surface)}
 .tabs button[data-mode="demo"]{color:var(--teal);padding-inline:14px}
@@ -70,6 +70,10 @@ button:focus-visible,input:focus-visible,label:focus-within{outline:3px solid va
 .inrow{display:flex;gap:8px}
 .inrow input{flex:1;min-width:0;font:400 1.6rem var(--f-han);padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--surface);color:var(--ink);text-align:center}
 .inrow input::placeholder{font:400 .95rem var(--f-body);color:var(--muted)}
+.inrow input.roma{font:400 1.4rem var(--f-lo)}
+.inrow input.roma::placeholder{font:400 .85rem var(--f-body)}
+.lo.big{font-size:1.6rem;line-height:1.3}
+.lo .ok{color:var(--good)}.lo .no{color:var(--bad);text-decoration:underline}
 .btn{font:700 1rem var(--f-body);border:0;border-radius:12px;padding:14px;background:var(--ink);color:var(--bg);cursor:pointer}
 .btn.ghost{background:transparent;color:var(--indigo);border:1px solid var(--line);font-weight:500}
 .row2{display:flex;gap:8px}.row2 .btn{flex:1}
@@ -131,6 +135,7 @@ button:focus-visible,input:focus-visible,label:focus-within{outline:3px solid va
     <button role="tab" id="tab-demo" data-mode="demo" aria-selected="true" aria-label="八聲示範" title="八聲示範">ℹ️</button>
     <button role="tab" id="tab-tone" data-mode="tone" aria-selected="false">聽音選調</button>
     <button role="tab" id="tab-dict" data-mode="dict" aria-selected="false">聽寫漢字</button>
+    <button role="tab" id="tab-roma" data-mode="roma" aria-selected="false">聽寫台羅</button>
   </div>
   <div class="card" id="card"></div>
   <div id="answers"></div>
@@ -183,12 +188,13 @@ let mode='demo'; // 打開網頁一律先顯示八聲示範（ℹ️ 分頁）
 let wrong=store.get('ty-wrong',{tone:[],dict:[]}); if(!wrong.tone) wrong={tone:[],dict:[]};
 // 詞表改用 700 字表編號：以前存下的錯題編號轉成新編號（只做一次）
 if(store.get('ty-ver',0)<2){const f=a=>[...new Set((a||[]).map(n=>MIG[n]).filter(Boolean))];wrong={tone:f(wrong.tone),dict:f(wrong.dict)};store.set('ty-wrong',wrong);store.set('ty-ver',2);}
+if(!wrong.roma) wrong.roma=[];
 // 選調題：漢字＋台羅完全相同的字（如 外 guā、空 khang、下 ē 各有兩個意思）聲音一樣，只出一次
 const TONE_W=W.filter(w=>w.t).filter((w,i,a)=>a.findIndex(x=>x.h===w.h&&x.lo===w.lo)===i);
 // 以前存下的選調錯題若是被併掉的那一筆，改記成保留的那一筆
 {const keep=n=>{const w=W.find(x=>x.n===n);const k=w&&TONE_W.find(x=>x.h===w.h&&x.lo===w.lo);return k?k.n:n};
- wrong.tone=[...new Set(wrong.tone.map(keep))];}
-const stats={tone:{r:0,t:0,s:0},dict:{r:0,t:0,s:0}};
+ wrong.tone=[...new Set(wrong.tone.map(keep))].filter(n=>TONE_W.some(x=>x.n===n));}
+const stats={tone:{r:0,t:0,s:0},dict:{r:0,t:0,s:0},roma:{r:0,t:0,s:0}};
 let q=null, done=false, last=null;
 
 function pool(){
@@ -229,10 +235,13 @@ function newQ(autoplay){
     lockTones(true); // 還沒按播放前鎖住聲調按鈕
   }else{
     $('card').innerHTML=`<p class="zh"><small>華語意思</small>${q.zh}</p><button class="play" id="play" aria-label="播放">${playIcon}</button>`;
-    $('answers').innerHTML=`<div class="inrow"><input id="inp" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="用台語輸入法打漢字" aria-label="輸入漢字"><button class="btn" id="chk">對答案</button></div>`;
+    const roma=mode==='roma', check=roma?checkRoma:checkDict;
+    $('answers').innerHTML=roma
+      ?`<div class="inrow"><input id="inp" class="roma" type="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="台羅（可打 ka1-ki7）" aria-label="輸入台羅"><button class="btn" id="chk">對答案</button></div>`
+      :`<div class="inrow"><input id="inp" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="用台語輸入法打漢字" aria-label="輸入漢字"><button class="btn" id="chk">對答案</button></div>`;
     const inp=$('inp');
-    inp.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.isComposing&&e.keyCode!==229){e.preventDefault();checkDict()}});
-    $('chk').onclick=checkDict;
+    inp.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.isComposing&&e.keyCode!==229){e.preventDefault();check()}});
+    $('chk').onclick=check;
   }
   $('play').onclick=()=>{play(q);lockTones(false)};
   updMeta();
@@ -285,6 +294,45 @@ function checkDict(){
     <div class="ans">${ok?q.h:shown}</div><div class="lo">${q.lo}</div>
     ${ok?'':`<div class="mine">你寫的：${raw}</div>`}
     ${q.h.includes('(')?'<div class="mine">括號裡的「仔」可寫可不寫。</div>':''}</div>${footer()}`;
+  wire();
+}
+
+// 聽寫台羅：可以直接打聲調符號，也可以打數字（ka1-ki7 → ka-kī），聲調和符號位置都要對才算對
+const TMARK={2:'́',3:'̀',5:'̂',6:'̌',7:'̄',8:'̍',9:'̋'};
+function markSyl(syl,d){
+  const base=syl.normalize('NFD').replace(/[̀-ͯ]/g,''); if(!TMARK[d]) return base;
+  const s=base.toLowerCase(); let i;
+  if(s.includes('a')) i=s.indexOf('a');
+  else if(s.includes('o')) i=s.indexOf('o');
+  else if(s.includes('e')) i=s.indexOf('e');
+  else if(s.includes('ui')) i=s.indexOf('ui')+1;
+  else if(s.includes('iu')) i=s.indexOf('iu')+1;
+  else if(s.includes('i')) i=s.indexOf('i');
+  else if(s.includes('u')) i=s.indexOf('u');
+  else if(s.includes('ng')) i=s.lastIndexOf('ng');
+  else if(s.includes('m')) i=s.indexOf('m');
+  else return base;
+  return (base.slice(0,i+1)+TMARK[d]+base.slice(i+1)).normalize('NFC');
+}
+const toMarks=s=>s.normalize('NFC').replace(/([a-zA-ZÀ-ɏḀ-ỿ̀-ͯ]+)([1-9])/g,(m,syl,d)=>markSyl(syl,+d));
+const normLo=s=>toMarks(s).normalize('NFC').toLowerCase().trim().replace(/\s+/g,' ');
+function checkRoma(){
+  if(done) return;
+  const raw=$('inp').value; if(!raw.trim()){ $('inp').focus(); return; }
+  done=true;
+  const g=normLo(raw), full=normLo(q.lo.replace(/[()]/g,'')), short=normLo(q.lo.replace(/\(.*?\)/g,''));
+  const ok=g===full||g===short;
+  record(ok);
+  $('inp').disabled=true;$('chk').disabled=true;
+  const target=q.lo.includes('(')&&g.split('-').length<=short.split('-').length?short:full;
+  const gs=g.split(/[-\s]+/); let k=0;
+  const shown=target.split(/(-+)/).map(x=>/^-+$/.test(x)?x:`<span class="${gs[k++]===x?'ok':'no'}">${x}</span>`).join('');
+  const onlyDash=!ok&&g.replace(/[-\s]/g,'')===target.replace(/-/g,'');
+  $('feedback').innerHTML=`<div class="fb ${ok?'good':'bad'}" role="status"><strong>${ok?'答對了！':'再看一下'}</strong>
+    <div class="lo big">${ok?q.lo:shown}</div><div><span class="ans">${q.h}</span></div>
+    ${ok?'':`<div class="mine">你寫的：${g}</div>`}
+    ${onlyDash?'<div class="mine">拼音和聲調都對，只差連字號（「--」表示後面唸輕聲）。</div>':''}
+    ${q.lo.includes('(')?'<div class="mine">括號裡的「-á」可寫可不寫。</div>':''}</div>${footer()}`;
   wire();
 }
 
